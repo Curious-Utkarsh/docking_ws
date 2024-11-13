@@ -4,10 +4,11 @@ This repository provides a ROS2-based solution for an autonomous docking system 
 
 Features
 
-    ArUco Marker Detection: Detects and tracks docking markers in the environment.
-    Battery Monitoring: Triggers the docking sequence when the battery level falls below a specified threshold.
-    Fallback Docking: Redirects to alternative docking locations if the initial dock is unavailable.
-    Dynamic Obstacle Avoidance: Adjusts the robot's path when obstacles are detected en route.
+ArUco Marker Detection: Detects and tracks docking markers in the environment.
+Battery Monitoring: Triggers the docking sequence when the battery level falls below a specified threshold.
+Fallback Docking: Redirects to alternative docking locations if the initial dock is unavailable.
+Dynamic Obstacle Avoidance: Adjusts the robot's path when obstacles are detected en route.
+
 
 Prerequisites
 
