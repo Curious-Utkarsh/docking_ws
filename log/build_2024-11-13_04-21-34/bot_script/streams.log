@@ -1,0 +1,20 @@
+[0.494s] Invoking command in '/home/utk/dock_ws/build/bot_script': PYTHONPATH=/home/utk/dock_ws/build/bot_script/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/utk/dock_ws/install/bot_script/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/utk/dock_ws/build/bot_script/build --no-deps symlink_data
+[0.712s] running develop
+[0.712s] /usr/lib/python3/dist-packages/setuptools/command/easy_install.py:158: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.
+[0.712s]   warnings.warn(
+[0.861s] running egg_info
+[0.861s] writing bot_script.egg-info/PKG-INFO
+[0.861s] writing dependency_links to bot_script.egg-info/dependency_links.txt
+[0.861s] writing entry points to bot_script.egg-info/entry_points.txt
+[0.861s] writing requirements to bot_script.egg-info/requires.txt
+[0.861s] writing top-level names to bot_script.egg-info/top_level.txt
+[0.863s] reading manifest file 'bot_script.egg-info/SOURCES.txt'
+[0.863s] writing manifest file 'bot_script.egg-info/SOURCES.txt'
+[0.865s] running build_ext
+[0.865s] Creating /home/utk/dock_ws/install/bot_script/lib/python3.10/site-packages/bot-script.egg-link (link to .)
+[0.865s] Installing navigation script to /home/utk/dock_ws/install/bot_script/lib/bot_script
+[0.865s] Installing pose_estimator script to /home/utk/dock_ws/install/bot_script/lib/bot_script
+[0.866s] 
+[0.866s] Installed /home/utk/dock_ws/build/bot_script
+[0.866s] running symlink_data
+[0.883s] Invoked command in '/home/utk/dock_ws/build/bot_script' returned '0': PYTHONPATH=/home/utk/dock_ws/build/bot_script/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/utk/dock_ws/install/bot_script/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py develop --editable --build-directory /home/utk/dock_ws/build/bot_script/build --no-deps symlink_data
