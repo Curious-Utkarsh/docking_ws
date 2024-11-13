@@ -27,6 +27,7 @@ class BotNavNode(Node):
         self.front_ray = 0.0
         self.trans_x = 0.0
         self.is_docking = False
+        self.flag = False
 
         self.velocity_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.sub_camera = self.create_subscription(Image, "/camera/image_raw", self.cameraCallback, 10)
@@ -115,18 +116,24 @@ class BotNavNode(Node):
 
         if self.trans_x == 0.0:
             self.set_and_follow_goal(-4.5, -1.0, -1.57)
+            self.flag = True
+        else:
+            self.flag = False
 
-        if abs(error) > 0.0:
+        if abs(error) > 0.0 or self.flag == True:
             ang = 0.0005 * error  # Adjust angle proportionally
         else:
             ang = 0.0  # Stop angular adjustment
 
-        if self.front_ray > distance_threshold:
+        if self.front_ray > distance_threshold or self.flag == True:
             lin = 0.1  # Move forward
         else:
             lin = 0.0  # Stop linear motion
             ang = 0.0
             self.is_docking = False
+            self.flag = False
+            error = 0.0
+            self.trans_x = 0.0
 
         if lin == 0.0 and ang == 0.0:
             self.get_logger().info("Docking complete.")
@@ -181,7 +188,7 @@ class BotNavNode(Node):
         # print("Front Ray = " + str(self.front_ray))
 
     def batteryCallback(self, status):
-        if status.data <= 20 and self.is_docking == False:
+        if status.data <= 20 and self.is_docking == False and self.flag == False:
             self.is_docking = True
             self.set_and_follow_goal(-0.6, 5.2, -0.1)
         if status.data > 20:
