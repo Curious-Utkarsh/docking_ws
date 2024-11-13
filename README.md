@@ -2,7 +2,15 @@
 
 This repository provides a ROS2-based solution for an autonomous docking system that leverages ArUco markers for marker-based navigation and docking. Using turtlebot3_gazebo, nav2, and opencv, this solution enables the robot to autonomously navigate to a docking station upon receiving a low-battery signal while dynamically avoiding obstacles.
 
+Features
+
+    ArUco Marker Detection: Detects and tracks docking markers in the environment.
+    Battery Monitoring: Triggers the docking sequence when the battery level falls below a specified threshold.
+    Fallback Docking: Redirects to alternative docking locations if the initial dock is unavailable.
+    Dynamic Obstacle Avoidance: Adjusts the robot's path when obstacles are detected en route.
+
 Prerequisites
+
 System Requirements
 
     ROS2: Humble Hawksbill
@@ -11,7 +19,8 @@ System Requirements
     sudo apt install python3-pip
 
     OpenCV and other Python packages
-
+    
+Installation Steps
 
 Step 1: ROS2 Installation
 
@@ -95,6 +104,29 @@ Start the Pose Estimator Node: This node is responsible for estimating the robot
 Run the Navigation Node: This node performs the navigation and docking logic, using ArUco markers for precise docking.
 
     ros2 run bot_script navigation
+
+Simulate Low Battery to Trigger Docking: Publish a low battery status to initiate the autonomous docking process:
+
+    ros2 topic pub /battery std_msgs/msg/Int64 "data: 10"
+
+    This command sends a battery percentage of 10, which is below the threshold (20%) and triggers the docking sequence.
+
+Docking Logic
+
+    The docking logic monitors battery status and initiates docking if the battery percentage falls below 20%.
+
+    Battery Callback Logic:
+
+    def batteryCallback(self, status):
+        if status.data <= 20 and self.is_docking == False:
+            self.is_docking = True
+            self.set_and_follow_goal(-0.6, 5.2, -0.1)  # Main docking position
+        if status.data > 20:
+            self.is_docking = False
+
+Alternative Docking: If the robot encounters an unavailable or obstructed docking station, it dynamically searches for an alternative dock and repositions to reach the new docking location.
+
+Dynamic Obstacle Avoidance: The robot actively avoids obstacles in its path during docking, rerouting as needed to ensure a safe approach.
 
 File Structure
 
