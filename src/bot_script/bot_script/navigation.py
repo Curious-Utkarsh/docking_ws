@@ -12,6 +12,7 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros import TransformException
 from tf2_ros import TransformBroadcaster
+from std_msgs.msg import Int64
 
 class BotNavNode(Node):
     def __init__(self):
@@ -30,9 +31,9 @@ class BotNavNode(Node):
         self.velocity_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.sub_camera = self.create_subscription(Image, "/camera/image_raw", self.cameraCallback, 10)
         self.sub_lidar = self.create_subscription(LaserScan, "/scan", self.lidarCallback, 10)
+        self.battery_sub = self.create_subscription(Int64, "/battery", self.batteryCallback, 10)
 
         self.set_and_follow_goal(3.0, -0.8, 0.0)
-        self.set_and_follow_goal(-0.6, 5.2, -0.1)
 
     # Create PoseStamped for navigation
     def create_pose_stamped(self, x, y, yaw):
@@ -97,7 +98,8 @@ class BotNavNode(Node):
                     cv2.circle(self.frame, (920, 540), radius=5, color=(255, 0, 0), thickness=-1)
                     cv2.circle(self.frame, (center_aruco_list[i][0], center_aruco_list[i][1]), radius=7, color=(255, 0, 0), thickness=2)
 
-            self.perform_docking()
+            if self.is_docking == True:
+                self.perform_docking()
 
         cv2.imshow('Frame', self.frame)
         cv2.waitKey(1)
@@ -114,19 +116,20 @@ class BotNavNode(Node):
         if self.trans_x == 0.0:
             self.set_and_follow_goal(-4.5, -1.0, -1.57)
 
-        if self.front_ray > distance_threshold:
-            lin = 0.1  # Move forward
-        else:
-            lin = 0.0  # Stop linear motion
-
         if abs(error) > 0.0:
             ang = 0.0005 * error  # Adjust angle proportionally
         else:
             ang = 0.0  # Stop angular adjustment
 
+        if self.front_ray > distance_threshold:
+            lin = 0.1  # Move forward
+        else:
+            lin = 0.0  # Stop linear motion
+            ang = 0.0
+            self.is_docking = False
+
         if lin == 0.0 and ang == 0.0:
             self.get_logger().info("Docking complete.")
-            self.is_docking = False  # Stop docking
             self.vel_pub(lin, ang)
         else:
             self.vel_pub(lin, ang)
@@ -176,6 +179,13 @@ class BotNavNode(Node):
     def lidarCallback(self, scan):
         self.front_ray = min(scan.ranges[1], 100)  
         # print("Front Ray = " + str(self.front_ray))
+
+    def batteryCallback(self, status):
+        if status.data <= 20 and self.is_docking == False:
+            self.is_docking = True
+            self.set_and_follow_goal(-0.6, 5.2, -0.1)
+        if status.data > 20:
+            self.is_docking = False
 
 def main(args=None):
     rclpy.init(args=args)
