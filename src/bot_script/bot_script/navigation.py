@@ -3,7 +3,7 @@ from rclpy.node import Node
 from nav2_simple_commander.robot_navigator import BasicNavigator
 from geometry_msgs.msg import PoseStamped, Twist, TransformStamped
 import tf_transformations
-from sensor_msgs.msg import Image, LaserScan
+from sensor_msgs.msg import Image, LaserScan, Imu
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -25,13 +25,18 @@ class BotNavNode(Node):
         self.bridge = CvBridge()
         self.frame = None
         self.front_ray = 0.0
+        self.left_ray = 0.0
+        self.right_ray = 0.0
         self.trans_x = 0.0
+        self.yaw = 0.0
         self.is_docking = False
+        self.is_align = False
         self.flag = False
 
         self.velocity_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.sub_camera = self.create_subscription(Image, "/camera/image_raw", self.cameraCallback, 10)
         self.sub_lidar = self.create_subscription(LaserScan, "/scan", self.lidarCallback, 10)
+        self.sub_imu = self.create_subscription(Imu, "/imu", self.imuCallback, 10)
         self.battery_sub = self.create_subscription(Int64, "/battery", self.batteryCallback, 10)
 
         self.set_and_follow_goal(3.0, -0.8, 0.0)
@@ -102,6 +107,10 @@ class BotNavNode(Node):
             if self.is_docking == True:
                 self.perform_docking()
 
+            elif self.is_align == True and self.is_docking == False:
+                #self.alignLidar()
+                self.alignIMU()
+
         cv2.imshow('Frame', self.frame)
         cv2.waitKey(1)
 
@@ -112,7 +121,7 @@ class BotNavNode(Node):
 
         distance_threshold = 0.4
 
-        print("Front ray" + str(self.front_ray)) 
+        # print("Front ray" + str(self.front_ray)) 
 
         if self.trans_x == 0.0:
             self.set_and_follow_goal(-4.5, -1.0, -1.57)
@@ -134,6 +143,7 @@ class BotNavNode(Node):
             self.flag = False
             error = 0.0
             self.trans_x = 0.0
+            self.is_align = True
 
         if lin == 0.0 and ang == 0.0:
             self.get_logger().info("Docking complete.")
@@ -141,8 +151,8 @@ class BotNavNode(Node):
         else:
             self.vel_pub(lin, ang)
 
-        print("lin" + str(lin))
-        print("ang" + str(ang))
+        # print("lin" + str(lin))
+        # print("ang" + str(ang))
 
     # Publish velocity commands
     def vel_pub(self, lin, ang):
@@ -185,14 +195,55 @@ class BotNavNode(Node):
     # LIDAR callback for distance tracking
     def lidarCallback(self, scan):
         self.front_ray = min(scan.ranges[1], 100)  
-        # print("Front Ray = " + str(self.front_ray))
+        self.right_ray = min(scan.ranges[350], 100)
+        self.left_ray = min(scan.ranges[10], 100)
+
+        # print("Right Ray : " + str(self.right_ray))
+        # print("Left Ray : " + str(self.left_ray))
+        # print("- - - - - -")
+        print("is_docking || is_align: " + str(self.is_docking) + " || " + str(self.is_align))
+
+    def imuCallback(self, imu):
+        # Access orientation (quaternion format)
+        orientation = imu.orientation
+        orientation_x = orientation.x
+        orientation_y = orientation.y
+        orientation_z = orientation.z
+        orientation_w = orientation.w
+
+        r, p, y = tf_transformations.euler_from_quaternion(
+            [orientation_x, orientation_y, orientation_z, orientation_w]
+        )
+        self.yaw = y 
 
     def batteryCallback(self, status):
         if status.data <= 20 and self.is_docking == False and self.flag == False:
-            self.is_docking = True
             self.set_and_follow_goal(-0.6, 5.2, -0.1)
+            self.is_docking = True
         if status.data > 20:
             self.is_docking = False
+
+    def alignLidar(self):
+        error = self.left_ray - self.right_ray
+        # print("Error = " + str(error))
+        if abs(error) < 0.005: 
+            ang = 0.0
+            self.is_align = False
+        else :
+            ang = -0.5*error
+
+        self.vel_pub(0.0, ang)
+
+    def alignIMU(self):
+        print("YAW = " + str(self.yaw))
+        if abs(self.yaw) < 0.005: 
+            ang = 0.0
+            self.is_align = False
+        else :
+            ang = 0.05
+
+        self.vel_pub(0.0, ang)
+        
 
 def main(args=None):
     rclpy.init(args=args)
