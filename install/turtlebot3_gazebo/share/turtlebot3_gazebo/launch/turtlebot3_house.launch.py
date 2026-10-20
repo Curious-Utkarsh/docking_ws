@@ -1,1 +1,0 @@
-/home/utk/dock_ws/src/turtlebot3_gazebo/launch/turtlebot3_house.launch.py
