@@ -1,157 +1,76 @@
-# Autonomous Docking System Using ArUco Markers in ROS2
+# Autonomous Docking with ArUco Markers — TurtleBot3, ROS 2
 
-This repository provides a ROS2-based solution for an autonomous docking system that leverages ArUco markers for marker-based navigation and docking. Using turtlebot3_gazebo, nav2, and opencv, this solution enables the robot to autonomously navigate to a docking station upon receiving a low-battery signal while dynamically avoiding obstacles.
+[![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros)](https://docs.ros.org/en/humble/)
+[![Nav2](https://img.shields.io/badge/Nav2-navigation-1F6FEB)](https://docs.nav2.org/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-ArUco-5C3EE8?logo=opencv)](https://opencv.org/)
 
-Features
+A TurtleBot3 that drives itself to a charging dock when its battery runs low. Nav2 takes the robot to the dock area while avoiding obstacles; ArUco markers detected with OpenCV give the precise final approach. If the main dock is unavailable, the robot reroutes to an alternative dock.
 
-ArUco Marker Detection: Detects and tracks docking markers in the environment.
-Battery Monitoring: Triggers the docking sequence when the battery level falls below a specified threshold.
-Fallback Docking: Redirects to alternative docking locations if the initial dock is unavailable.
-Dynamic Obstacle Avoidance: Adjusts the robot's path when obstacles are detected en route.
+## Demo
 
+<p align="center">
+  <a href="https://youtu.be/WPieODtJKek"><img src="https://img.youtube.com/vi/WPieODtJKek/hqdefault.jpg" width="420" alt="TurtleBot3 autonomous docking with ArUco markers"></a>
+  <br><sub>Click to watch · <a href="https://www.linkedin.com/posts/kumar-utkarsh-124aab227_robotics-ros2-automation-activity-7262365107433725954-rZ_E">LinkedIn post</a></sub>
+</p>
 
-Prerequisites
+More TurtleBot3 + Nav2 runs from this workspace: [maze solver](https://youtu.be/Dcz1byU75Pg) · [house patrolling](https://youtu.be/aSTW4Spc6-M)
 
-System Requirements
+## Key features
 
-    ROS2: Humble Hawksbill
-    Gazebo: Gazebo Classic (turtlebot3_gazebo requires it)
-    Python 3 with pip
-    sudo apt install python3-pip
+- **Battery-triggered docking** — subscribes to `/battery`; at ≤ 20 % it sends a Nav2 goal to the dock.
+- **Marker-based precision** — ArUco markers are detected in the camera image and published as TF frames for the final alignment.
+- **Fallback docking** — if the main dock is blocked or unavailable, the robot redirects to an alternate dock.
+- **Dynamic obstacle avoidance** — Nav2 replans around obstacles on the way.
 
-    OpenCV and other Python packages
-    
-Installation Steps
+## Software stack
 
-Step 1: ROS2 Installation
+ROS 2 Humble · Nav2 · TurtleBot3 (waffle) · Gazebo Classic · OpenCV (ArUco) · tf2 · Python
 
-    Set up ROS2 Humble: Follow the official ROS2 Humble installation guide.
+## Run
 
-    Source ROS2 Environment:
+```bash
+# prerequisites (Ubuntu 22.04, ROS 2 Humble)
+sudo apt install ros-humble-turtlebot3* ros-humble-nav2-bringup ros-humble-gazebo-ros-pkgs
+pip3 install opencv-contrib-python==4.7.0.72 numpy==1.21.5
+export TURTLEBOT3_MODEL=waffle
 
-    source /opt/ros/humble/setup.bash
-    source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
-    export TURTLEBOT3_MODEL=waffle
-    export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    export PATH=$PATH:~/.local/bin 
-    source /usr/share/gazebo-11/setup.bash
-    export GAZEBO_MODEL_PATH=/usr/share/gazebo-11/models
-    export GAZEBO_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gazebo-11/plugins
-    export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-11
+# workspace
+mkdir -p ~/dock_ws && cd ~/dock_ws
+git clone https://github.com/Curious-Utkarsh/TurtleBot3_Autonomous_Docking.git .
+colcon build && source install/setup.bash
 
-Step 2: Install Gazebo and ROS2 Control Packages
+# terminals 1–5
+ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py
+rviz2 -d src/turtlebot3_gazebo/rviz/config.rviz
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=true map:=src/turtlebot3_gazebo/maps/my_house.yaml
+ros2 run bot_script pose_estimator
+ros2 run bot_script navigation
 
-    Install Gazebo and Control Packages:
+# trigger docking: battery 10 % (threshold is 20 %)
+ros2 topic pub /battery std_msgs/msg/Int64 "data: 10"
+```
 
-    sudo apt update
-    sudo apt install ros-humble-ros2-control ros-humble-ros2-controllers ros-humble-gazebo-ros2-control
+<details>
+<summary><b>Docking logic and troubleshooting</b></summary>
 
-    Install Additional Gazebo ROS Packages:
+```python
+def batteryCallback(self, status):
+    if status.data <= 20 and self.is_docking == False:
+        self.is_docking = True
+        self.set_and_follow_goal(-0.6, 5.2, -0.1)  # main docking position
+    if status.data > 20:
+        self.is_docking = False
+```
 
-    sudo apt-get install ros-humble-gazebo-ros-pkgs
+- `src/turtlebot3_gazebo/` — worlds, models, RViz config and the `my_house` map
+- `src/bot_script/` — `pose_estimator` (marker detection → TF) and `navigation` (battery monitoring, Nav2 goals, docking)
+- Gazebo/RViz out of sync → adjust the simulation rate; missing camera or LiDAR topics → check the URDF plugins; keep `use_sim_time` true for all nodes; tune `nav2_params.yaml` if the robot hesitates near obstacles.
 
-Step 3: Set up Repo
+</details>
 
-    Clone the TurtleBot3 Gazebo Repository:
-    
-    mkdir docking_ws
-    cd ~/dock_ws
-    git clone https://github.com/Curious-Utkarsh/docking_ws.git
+## Related
 
-    Install TurtleBot3 Packages:
-    
-    sudo apt install ros-humble-turtlebot3* 
-    
-    Set TurtleBot3 Model:
+This was my first docking project. The idea grew into vision docking on [Aura](https://github.com/Curious-Utkarsh/ROS2_Mobile_Manipulator_Gazebo), autonomous undocking on [Mobi](https://github.com/Curious-Utkarsh/Indoor_Service_AMR), and QR + LiDAR docking on real hardware with [MechaBot](https://github.com/MechaMind-Labs/AMR-Mastery).
 
-    export TURTLEBOT3_MODEL=waffle
-
-Step 4: Install Python Dependencies
-
-    Install OpenCV and Numpy:
-
-    pip3 install opencv-contrib-python==4.7.0.72 numpy==1.21.5
-
-    Install Other Dependencies (if any): List other dependencies if applicable.
-
-    Build the Workspace:
-
-    cd ~/dock_ws
-    colcon build
-    source install/setup.bash
-
-    Verify Installation: Ensure all dependencies are correctly installed and sourced.
-
-Running the Simulation and Docking System
-
-To run the autonomous docking system, follow these steps:
-
-    Launch the Gazebo World with TurtleBot3:
-
-    ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py
-
-Open RViz with Configuration:
-
-    rviz2 -d dock_ws/src/turtlebot3_gazebo/rviz/config.rviz
-
-Run the Nav2 Bringup for Navigation and Localization:
-
-    ros2 launch nav2_bringup bringup_launch.py use_sim_time:=true map:=dock_ws/src/turtlebot3_gazebo/maps/my_house.yaml
-
-Start the Pose Estimator Node: This node is responsible for estimating the robot's pose based on marker detection.
-
-    ros2 run bot_script pose_estimator
-
-Run the Navigation Node: This node performs the navigation and docking logic, using ArUco markers for precise docking.
-
-    ros2 run bot_script navigation
-
-Simulate Low Battery to Trigger Docking: Publish a low battery status to initiate the autonomous docking process:
-
-    ros2 topic pub /battery std_msgs/msg/Int64 "data: 10"
-
-    This command sends a battery percentage of 10, which is below the threshold (20%) and triggers the docking sequence.
-
-Docking Logic
-
-    The docking logic monitors battery status and initiates docking if the battery percentage falls below 20%.
-
-    Battery Callback Logic:
-
-    def batteryCallback(self, status):
-        if status.data <= 20 and self.is_docking == False:
-            self.is_docking = True
-            self.set_and_follow_goal(-0.6, 5.2, -0.1)  # Main docking position
-        if status.data > 20:
-            self.is_docking = False
-
-Alternative Docking: If the robot encounters an unavailable or obstructed docking station, it dynamically searches for an alternative dock and repositions to reach the new docking location.
-
-Dynamic Obstacle Avoidance: The robot actively avoids obstacles in its path during docking, rerouting as needed to ensure a safe approach.
-
-File Structure
-
-    turtlebot3_gazebo/: Contains Gazebo worlds, models, and RViz configuration.
-    bot_script/: Includes custom nodes for pose estimation (pose_estimator) and navigation (navigation).
-    maps/: Contains the my_house.yaml map file for localization.
-
-Troubleshooting
-
-    Gazebo and RViz Synchronization Issues: If there is a delay between Gazebo and RViz, adjust the simulation rate in the Gazebo parameters.
-    Missing Camera or LiDAR Topics: Ensure that all required plugins are loaded in the URDF model.
-    Low-Battery Simulation: Manually adjust the battery topic to simulate a low-battery signal for testing the autonomous docking behavior.
-
-Additional Notes
-
-    Simulation Time: Ensure that use_sim_time is enabled for all nodes.
-    Parameter Tuning: Adjust parameters in nav2_params.yaml to refine navigation, particularly if there are obstacles.
-
-Acknowledgments
-
-    TurtleBot3 Simulation Packages by ROBOTIS
-    ROS2 and Nav2 Documentation
-    OpenCV for ArUco Marker Detection
-
-License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
+---
+[Kumar Utkarsh](https://github.com/Curious-Utkarsh) · [LinkedIn](https://www.linkedin.com/in/kumar-utkarsh-124aab227/) · [MechaMind Labs](https://www.mechamindlabs.com/)
