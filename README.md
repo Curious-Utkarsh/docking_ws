@@ -36,7 +36,7 @@ export TURTLEBOT3_MODEL=waffle
 
 # workspace
 mkdir -p ~/dock_ws && cd ~/dock_ws
-git clone https://github.com/Curious-Utkarsh/TurtleBot3_Autonomous_Docking.git .
+git clone https://github.com/Curious-Utkarsh/turtlebot3-aruco-docking.git .
 colcon build && source install/setup.bash
 
 # terminals 1–5
@@ -70,7 +70,7 @@ def batteryCallback(self, status):
 
 ## Related
 
-This was my first docking project. The idea grew into vision docking on [Aura](https://github.com/Curious-Utkarsh/ROS2_Mobile_Manipulator_Gazebo), autonomous undocking on [Mobi](https://github.com/Curious-Utkarsh/Indoor_Service_AMR), and QR + LiDAR docking on real hardware with [MechaBot](https://github.com/MechaMind-Labs/AMR-Mastery).
+This was my first docking project. The idea grew into vision docking on [Aura](https://github.com/Curious-Utkarsh/aura-mobile-manipulator), autonomous undocking on [Mobi](https://github.com/Curious-Utkarsh/mobi-service-robot), and QR + LiDAR docking on real hardware with [MechaBot](https://github.com/MechaMind-Labs/AMR-Mastery).
 
 ---
 [Kumar Utkarsh](https://github.com/Curious-Utkarsh) · [LinkedIn](https://www.linkedin.com/in/kumar-utkarsh-124aab227/) · [MechaMind Labs](https://www.mechamindlabs.com/)
