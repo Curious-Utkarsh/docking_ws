@@ -1,4 +1,0 @@
-[console_scripts]
-navigation = bot_script.navigation:main
-pose_estimator = bot_script.pose_estimator:main
-
