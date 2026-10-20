@@ -4,7 +4,7 @@
 [![Nav2](https://img.shields.io/badge/Nav2-navigation-1F6FEB)](https://docs.nav2.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-ArUco-5C3EE8?logo=opencv)](https://opencv.org/)
 
-A TurtleBot3 that drives itself to a charging dock when its battery runs low. Nav2 takes the robot to the dock area while avoiding obstacles; ArUco markers detected with OpenCV give the precise final approach. If the main dock is unavailable, the robot reroutes to an alternative dock.
+A TurtleBot3 that drives itself to a charging dock when its battery runs low. Nav2 takes the robot to the dock area while avoiding obstacles; ArUco markers detected with OpenCV guide the final alignment. If the main dock is unavailable, the robot reroutes to an alternative dock.
 
 ## Demo
 
