@@ -15,6 +15,8 @@ A TurtleBot3 that drives itself to a charging dock when its battery runs low. Na
 
 More TurtleBot3 + Nav2 runs from this workspace: [maze solver](https://youtu.be/Dcz1byU75Pg) · [house patrolling](https://youtu.be/aSTW4Spc6-M)
 
+Playlist: [ROS 2 Projects](https://www.youtube.com/playlist?list=PLVjFk3hP8Wm4)
+
 ## Key features
 
 - **Battery-triggered docking** — subscribes to `/battery`; at ≤ 20 % it sends a Nav2 goal to the dock.
